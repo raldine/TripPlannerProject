@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script async th:src="'https://maps.googleapis.com/maps/api/js?key=' + ${key} + '&loading=async&callback=initMap'">
+    </script>
+    <title>Process Route</title>
+</head>
+
+<body>
+    <div id="status" style="margin: 20px; font-size: 1.2em;">
+        Processing your request. Please wait...
+    </div>
+    <script type="text/javascript" th:inline="javascript">
+        function initMap() {
+            const originLatLng = /*[[${oLatLng}]]*/ null;
+            const destLatLng = /*[[${dLatLng}]]*/ null;
+
+            const directionsService = new google.maps.DirectionsService();
+
+            // Display the route and send the result to the backend
+            processRoute(originLatLng, destLatLng, directionsService);
+        }
+
+        function processRoute(origin, destination, service) {
+            const prefFewerTransfer = /*[[${prefFewerTransfer}]]*/ false;
+            const modeRailOnly = /*[[${modeRailOnly}]]*/ false;
+            const modeBothBusAndRail = /*[[${modeBothBusAndRail}]]*/ false;
+            const departureTime = /*[[${departureTime}]]*/ null;
+            const arrivalTime = /*[[${arrivalTime}]]*/ null;
+            const requestID = /*[[${keyid}]]*/ null;
+
+            let transitOptionsA = {
+                modes: ['BUS'],
+                routingPreference: 'LESS_WALKING'
+            };
+
+            if (prefFewerTransfer) {
+                transitOptionsA.routingPreference = 'FEWER_TRANSFERS';
+            }
+
+            if (modeRailOnly) {
+                transitOptionsA.modes = ['RAIL'];
+            }
+
+            if (modeBothBusAndRail) {
+                transitOptionsA.modes = ['BUS', 'RAIL'];
+            }
+
+            if (departureTime != null) {
+                transitOptionsA.departureTime = new Date(departureTime);
+            }
+
+            if (arrivalTime != null) {
+                transitOptionsA.arrivalTime = new Date(arrivalTime);
+            }
+
+            service
+                .route({
+                    origin: origin,
+                    destination: destination,
+                    travelMode: google.maps.TravelMode.TRANSIT,
+                    unitSystem: google.maps.UnitSystem.METRIC,
+                    region: 'sg',
+                    transitOptions: transitOptionsA,
+                })
+                .then((result) => {
+                    console.log('Route Result:', result);
+
+                    fetch('/valid/sendJsonResult', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'keyID': requestID
+                        },
+                        body: JSON.stringify(result) // Send the result object as JSON
+                    })
+                        .then(response => {
+                            if (response.redirected) {
+                                window.location.href = response.url; // Redirect to the URL
+                            } else if (response.ok) {
+                                return response.text(); // Process additional text response if needed
+                            } else {
+                                throw new Error('Failed to process the route.');
+                            }
+                        })
+                        .then(data => {
+                            console.log('Backend Response:', data);
+                        })
+                        .catch((error) => {
+                            console.error('Error while sending result:', error);
+                            alert('An error occurred while processing your request. Please check your start and end locations or route may contain private transport');
+                            window.location.href = "/"; 
+                        });
+                })
+                .catch((e) => {
+                    alert("Could not display directions due to: " + e);
+
+                    // Redirect to the index.html 
+                    window.location.href = "/"; // 
+                });
+        }
+
+        window.initMap = initMap;
+    </script>
+</body>
+
+</html>

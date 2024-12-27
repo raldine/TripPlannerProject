@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/styles.css">
+    <title>Create an Account</title>
+</head>
+<body>
+    <form method="POST" action="/newAccount/submit" data-th-object="${userDeet}">
+
+        <h1>Create an Account</h1>
+        <span>Username:</span>
+        <input type="text" data-th-field="*{username}"><br><br>
+        <span data-th-if="${#fields.hasErrors('username')}" data-th-errorclass="error" data-th-errors="*{username}"></span>
+
+        <span>Password:</span><br>
+        <input type="text" data-th-field="*{password}"><br><br>
+        <span data-th-if="${#fields.hasErrors('password')}" data-th-errorclass="error" data-th-errors="*{password}"></span>
+
+
+        <button type="submit">Create Account</button>
+    </form><br>
+
+    <a href="/login">Back to Login</a>
+
+</body>
+</html>

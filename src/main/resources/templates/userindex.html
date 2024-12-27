@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/styles.css">
+    <title>TripPlanner</title>
+</head>
+
+<body>
+
+    <h1>Hi <span data-th-text="${username}"></span></h1><br>
+    
+    <span>Get my current location as origin:</span>
+    <button onclick="getLocation()">Get My Location</button><br>
+    <span>OR:</span><br>
+    <form method="POST" action="/valid/getDirections" data-th-object="${req}">
+        <span>Origin Autocomplete:</span><br>
+        <input id="autocomplete" type="text" placeholder="Search an origin location/address" width="480px"><br>
+        <span>Origin Latitude:</span><br>
+        <input type="text" id="olatitude" data-th-field="*{olatitude}"><br>
+        <span>Origin Longitude:</span><br>
+        <input type="text" id="olongitude" data-th-field="*{olongitude}"><br>
+        <input type="text" id="oname" data-th-field="*{oName}"><br>
+        <input type="text" id="ofora" data-th-field="*{oForA}"><br>
+        <p id="formatted-address"></p><br><br>
+
+        <span>Destination Autocomplete:</span><br>
+        <input id="destination" type="text" placeholder="Search a destination location/address" width="480px"><br>
+        <span>Destination Longitude:</span><br>
+        <input type="text" id="dlatitude" data-th-field="*{dlatitude}"><br>
+        <span>Destination Longitude:</span><br>
+        <input type="text" id="dlongtitude" data-th-field="*{dlongtitude}"><br>
+        <input type="text" id="dname" data-th-field="*{dName}"><br>
+        <input type="text" id="dfora" data-th-field="*{dForA}"><br>
+        <p id="dformatted-address"></p><br><br>
+
+        <span>Either:</span><br>
+        <span>Departure Time:</span><br>
+        <input type="datetime-local" data-th-field="*{depTime}"><br>
+        <span>or:</span><br>
+        <span>Preferred Arrival Time:</span><br>
+        <input type="datetime-local" data-th-field="*{arrTime}"><br><br>
+
+        <span>Preferred travel options</span>
+        <select data-th-field="*{pref}">
+            <option value="less walking">Less Walking</option>
+            <option value="fewer transfers">Fewer Transfers</option>
+        </select><br>
+
+        <span>Preferred transports (multi-select possible):</span>
+        <input type="checkbox" data-th-field="*{transportModes}" value="train" checked>
+        <span>Prefer Trains</span><br>
+        <input type="checkbox" data-th-field="*{transportModes}" value="bus" checked>
+        <span>Prefer Buses</span><br>
+        
+
+
+        <button type="submit">Get Directions</button>
+
+    </form>
+
+    <hr>
+    <br>
+
+    <h1>My List of Saved Routes:</h1>
+    <ul>
+        <!-- Loop through the list of strings -->
+        <li th:each="item : ${listOfSavedRoutes}" th:text="${item}"></li>
+    </ul>
+
+
+
+
+
+    <!-- LOAD GET LOCATION FUNCTIONS -->
+    <script>
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(sendLocation, showError);
+            } else {
+                document.getElementById("output").innerText = "Geolocation is not supported by this browser.";
+            }
+        }
+
+        function sendLocation(position) {
+            // Fill the form fields with latitude and longitude
+            const lat = position.coords.latitude;
+            const long = position.coords.longitude;
+            document.getElementById("olatitude").value = lat;
+            document.getElementById("olongitude").value = long;
+            // Create the Geocoder object
+            const geocoder = new google.maps.Geocoder();
+
+            // Perform reverse geocoding
+            geocoder.geocode({ location: { lat: parseFloat(lat), lng: parseFloat(long) } }, (results, status) => {
+                if (status === "OK") {
+                    if (results[0]) {
+                        // Display the formatted address
+                        console.log(results[0]);
+                        const name = results[0].address_components[0].long_name;
+                        const formattedaddress = results[0].formatted_address;
+                        document.getElementById("formatted-address").innerText = "Your Current Location: " + name + " (" + formattedaddress + ")";
+                        document.getElementById("oname").value = name;
+                        document.getElementById("ofora").value = formattedaddress;
+                        console.log("Formatted Address:", results[0].formatted_address);
+                    } else {
+                        alert("No results found for the provided coordinates.");
+                    }
+                } else {
+                    alert("Geocoder failed due to: " + status);
+                }
+            });
+        }
+
+        function showError(error) {
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    document.getElementById("output").innerText = "User denied the request for Geolocation.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    document.getElementById("output").innerText = "Location information is unavailable.";
+                    break;
+                case error.TIMEOUT:
+                    document.getElementById("output").innerText = "The request to get user location timed out.";
+                    break;
+                default:
+                    document.getElementById("output").innerText = "An unknown error occurred.";
+            }
+        }
+    </script>
+
+    <!-- LOAD AUTOCOMPLETE FIELDS AND ITS FUNCTIONS -->
+    <script>
+        let autocomplete, destinationAutocomplete;
+
+        // This function will be called once the Google Maps API is loaded
+        function initAutocomplete() {
+            // Get the input element
+            const input = document.getElementById('autocomplete');
+            const desinput = document.getElementById('destination');
+
+            // Create an instance of Autocomplete attached to the input field
+            autocomplete = new google.maps.places.Autocomplete(input);
+            destinationAutocomplete = new google.maps.places.Autocomplete(desinput);
+
+           
+            const options = {
+    
+                componentRestrictions: { country: 'SG' }  // Restrict results to sg
+            };
+
+            autocomplete.setOptions(options);
+            destinationAutocomplete.setOptions(options);
+
+            // Add listener for place selection (when the user selects a suggestion)
+            autocomplete.addListener('place_changed', onPlaceChanged);
+            destinationAutocomplete.addListener('place_changed', onPlaceChangedDest);
+        }
+
+        // This function will be called when a user selects a place from the autocomplete suggestions
+        function onPlaceChanged() {
+            const place = autocomplete.getPlace();
+
+            if (!place.geometry) {
+                // If the selected place doesn't have geometry, return
+                console.log("No details available for the input: '" + place.name + "'");
+                return;
+            }
+
+            // Now, you can use the details of the selected place
+            console.log('Selected place:', place);
+
+            // For example, you can access the place's name, coordinates, and address
+            const name = place.name;
+            console.log("selected origin: " + name);
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            const formattedAddress = place.formatted_address;
+
+            // Do something with this information (like display it on the page, map, etc.)
+            document.getElementById("formatted-address").innerText = "Your start location: " + name + " (" + formattedAddress + ")";
+            document.getElementById("olatitude").value = lat;
+            document.getElementById("olongitude").value = lng;
+            document.getElementById("oname").value = name;
+            document.getElementById("ofora").value = formattedAddress;
+
+        }
+
+        function onPlaceChangedDest() {
+            const place = destinationAutocomplete.getPlace();
+
+            if (!place.geometry) {
+                // If the selected place doesn't have geometry, return
+                console.log("No details available for the input: '" + place.name + "'");
+                return;
+            }
+
+            // Now, you can use the details of the selected place
+            console.log('Selected place:', place);
+
+            // For example, you can access the place's name, coordinates, and address
+            const dname = place.name;
+            console.log("selected destination: " + name);
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            const dformattedAddress = place.formatted_address;
+
+
+            // Do something with this information (like display it on the page, map, etc.)
+            document.getElementById("dformatted-address").innerText = "Your end location: " + dname + " (" + dformattedAddress + ")";
+            document.getElementById("dlatitude").value = lat;
+            document.getElementById("dlongtitude").value = lng;
+            document.getElementById("dname").value = dname;
+            document.getElementById("dfora").value = dformattedAddress;
+        }
+    </script>
+    <script
+    th:src="'https://maps.googleapis.com/maps/api/js?key=' + ${key} + '&libraries=places&loading=async&callback=initAutocomplete'"
+    ></script>
+
+</body>
+
+</html>

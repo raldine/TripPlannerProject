@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/mapstyles.css">
+  <title>Route Details</title>
+</head>
+
+<body>
+
+  <div data-th-object="${request}">
+    <p>Request Was:</p>
+    <p>Start:</p>
+    <p><span data-th-text="*{oName}"></span>, <span data-th-text="*{oForA}"></span></p>
+    <p>End:</p>
+    <p><span data-th-text="*{dName}"></span>, <span data-th-text="*{dForA}"></span></p>
+    <p>Preferred Transit Options:</p>
+    <p><span data-th-text="*{transportModes}"></span>, <span data-th-text="*{pref}"></span></p>
+  </div><br>
+  <h2>Route/Direction generated on:<span data-th-text="${createdon}"></span></h2>
+  <br><br><br>
+
+  <div id="container">
+    <div id="map" style="float:left;height: 100%; width: 70%;"></div>
+    <div id="panel" style="float:right;width:30%;"></div>
+</div>
+
+
+  <div data-th-object="${result}">
+    <p>Result Was:</p>
+    <p>Departure Time:</p>
+    <p><span data-th-text="*{departTime}"></span></p>
+    <p>Estimated Arrival Time:</p>
+    <p><span data-th-text="*{arrivalTime}"></span></p>
+    <p>Estimated Total Duration:</p>
+    <p><span data-th-text="*{totalDuration}"></span></p>
+    <p>Total Travel Distance:</p>
+    <p><span data-th-text="*{totalDistance}"></span></p>
+  </div><br>
+
+  <a th:href="@{/valid/{username} (username=${username}, id=${routeid})}">Back to Dashboard</a><br>
+  <br><br>
+
+  <!-- only show bus if true -->
+  <div data-th-if="${hasBus == true}">
+    <h1>Bus Stop Information</h1>
+    <table border="1" style="width: 600px; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th>Bus Stop Name</th>
+          <th>Service Name</th>
+          <th>Next Bus</th>
+          <th>After</th>
+          <th>After</th>
+          <th>Number Of Stops</th>
+          <th>Bus Stop Code</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr data-th-each="busInfo : ${busInfos}" data-th-object="${busInfo}">
+          <td data-th-text="*{busStopName}"></td>
+          <td data-th-text="*{name}"></td>
+          <td>
+            <span data-th-text="*{Eta1}"></span><br>
+            <span data-th-text="*{Load1}"></span><br>
+            <span data-th-text="*{busType1}"></span>
+          </td>
+          <td>
+            <span data-th-text="*{Eta2}"></span><br>
+            <span data-th-text="*{Load2}"></span><br>
+            <span data-th-text="*{busType2}"></span>
+          </td>
+          <td>
+            <span data-th-text="*{Eta3}"></span><br>
+            <span data-th-text="*{Load3}"></span><br>
+            <span data-th-text="*{busType3}"></span>
+          </td>
+          <td>
+            <span data-th-text="*{numStops}"></span>
+            <h3>get off at <span data-th-text="*{arrivalStop}"></span></h3>
+          </td>
+          <td data-th-text="*{busStopCode}"></td>
+        </tr>
+      </tbody>
+    </table>
+    <p>Bus data was fetched on: <span data-th-text="${busDateFetch}"></span>   <a th:href="@{/valid/{username}/route/{id}/updateBus(username=${username}, id=${routeid})}">Update Bus Information</a></p> 
+  </div>
+  <!-- end of bus segment -->
+  <hr>
+
+  <!-- start of train segment -->
+  <div data-th-if="${hasTrain == true}">
+    <h1>Train Information</h1>
+    <table border="1" style="width: 600px; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th>Train Line</th>
+          <th>Depart from:</th>
+          <th>Real Time Crowd Level:</th>
+          <th>Number of Stops</th>
+          <th>Service Status:</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr data-th-each="train : ${trainsInfo}" data-th-object="${train}">
+          <td>
+            <span data-th-text="*{trainLine}"></span><br>
+          </td>
+          <td>
+            <span data-th-text="*{trainStationCode}"></span>
+            <span data-th-text="*{departureStop}"></span><br>
+            <h3>towards <span data-th-text="*{trainToward}"></span></h3>
+          </td>
+          <td>
+            <span data-th-text="*{realTimeCrowdLevel}"></span><br>
+            <h3>as of today: <span data-th-text="*{realTimeCrowdInterval}"></span></h3>
+          </td>
+          <td>
+            <span data-th-text="*{numStops}"></span>
+            <h3>get off at <span data-th-text="*{arrivalStop}"></span></h3>
+          </td>
+          <td data-th-text="*{servStatus}"></td>
+        </tr>
+      </tbody>
+    </table>
+    <p>Train data was fetched on: <span data-th-text="${trainDataFetchOn}"></span>   <a th:href="@{/valid/{username}/route/{id}/updateTrain(username=${username}, id=${routeid})}">Update Train</a></p> 
+  </div>
+  <!-- end of trian table -->
+
+  <!-- only show if there is disruption or recovery -->
+  <div data-th-if="${hasDisrupt == true}">
+
+    <table border="1" style="width: 600px; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th>Message from Train Operator(s):</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr data-th-each="message : ${MessageFromService}">
+          <td>
+            <span data-th-text="${message}"></span><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+  
+
+  <script type="text/javascript" th:inline="javascript">
+    function initMap() {
+      const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 12,
+        center: { lat: 1.3465651, lng: 103.8065776 }, // Singapore.
+        disableDefaultUI: true
+      });
+
+      const directionsRenderer = new google.maps.DirectionsRenderer({
+        draggable: true,
+        map,
+        panel: document.getElementById("panel"),
+      });
+
+      // Use the route result passed from the backend
+      const result = /*[[${routeResult}]]*/ null;
+      const resultP = JSON.parse(result);
+
+      if (resultP) {
+        console.log('Route result received from backend:', resultP);
+        directionsRenderer.setDirections(resultP);
+      } else {
+        alert('No route result provided by backend.');
+      }
+    }
+
+    window.initMap = initMap;
+  </script>
+  
+
+  
+  <script async th:src="'https://maps.googleapis.com/maps/api/js?key=' + ${key} + '&loading=async&callback=initMap'">
+  </script>
+</body>
+
+</html>

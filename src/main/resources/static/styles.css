@@ -1,0 +1,19 @@
+/* class -> .
+id -> # */
+
+.error{
+    color: darkred;
+    font-size: small;
+  }
+  
+  #autocomplete {
+      width: 640px; /* Set the desired width */
+  
+    }
+  #destination {
+      width: 640px; /* Set the desired width */
+  
+    }
+  
+  
+  

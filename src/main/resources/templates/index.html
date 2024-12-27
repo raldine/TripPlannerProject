@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/styles.css">
+    <title>Login to TripPlanner</title>
+</head>
+<body>
+    <div data-th-if="${unAuthorised == true}">
+        <span data-th-text="${unAuthorMessage}"></span>
+    </div>
+
+
+    <form method="POST" th:object="${userDeet}" action="/login/submit">
+        <h1>Login</h1>
+    
+        <span>Username:</span>
+        <input type="text" th:field="*{username}"><br><br>
+        <span data-th-if="${#fields.hasErrors('username')}" data-th-errorclass="error" data-th-errors="*{username}"></span>
+    
+        <span>Password:</span><br>
+        <input type="password" th:field="*{password}"><br><br>
+        <span data-th-if="${#fields.hasErrors('password')}" data-th-errorclass="error" data-th-errors="*{password}"></span>
+    
+        <button type="submit">Login</button>
+    </form>
+    
+
+    <a href="/newAccount">Create an Account</a>
+
+
+
+
+    
+</body>
+</html>

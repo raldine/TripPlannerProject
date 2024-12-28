@@ -1,28 +1,124 @@
 /* class -> .
 id -> # */
 
+.page-container {
+  width: 90%;
+  margin: auto;
+  margin-top: 80px;
+  margin-bottom: 80px;
+}
+
+
 #container {
-    height: 480px;
-    display: flex;
-  
-  }
-  
-  
-  
-  #panel {
-    flex-basis: 15rem;
-    flex-grow: 1;
-    padding: 1rem;
-    max-width: 30rem;
-    height: 100%;
-    box-sizing: border-box;
-    overflow: auto;
-  }
-  
-  #map {
-    flex-basis: 0;
-    flex-grow: 4;
-    height: 100%;
-    flex: auto;
-    overflow: visible;
-  }
+  height: 480px;
+  display: flex;
+
+}
+
+#button-time {
+  display: flex;
+  margin-top: 10px;
+  justify-content: space-between;
+  align-items: flex-end;
+
+
+}
+
+#service-alert .card-header {
+  background-color: #ffcc00;
+  color: #000; 
+  font-weight: bold; 
+}
+
+#result-container{
+  background-color: #e1ebe7;
+  padding-top: 16px;
+  padding-bottom: 10px;
+  padding-right: 8px;
+  padding-left: 8px;
+  margin-bottom: 16px;
+}
+
+#bus-container {
+  margin: auto;
+
+}
+
+#train-container {
+  margin: auto;
+
+}
+
+
+/* .table-striped tbody tr:nth-child(odd) {
+
+}
+
+
+.table-striped tbody tr:nth-child(even) {
+
+}
+.table-striped thead th {
+
+}
+.table-striped td:nth-child(1), .table-striped th:nth-child(1) {
+
+} */
+
+.tablebus .table td:nth-child(7), .table th:nth-child(7) {
+  width: 56px; /* Set the desired width */
+}
+
+.tabletrain .table-striped td:nth-child(2), .table-striped th:nth-child(2) {
+  width: 156px; /* Set the desired width */
+}
+
+.tabletrain .table-striped td:nth-child(3), .table-striped th:nth-child(3) {
+  width: 300px; /* Set the desired width */
+}
+
+
+
+
+#panel {
+  flex-basis: 15rem;
+  flex-grow: 1;
+  padding: 1rem;
+  max-width: 30rem;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+#map {
+  flex-basis: 0;
+  flex-grow: 4;
+  height: 100%;
+  flex: auto;
+  overflow: visible;
+}
+
+h1 {
+  font-size: 32px;
+  /* Custom font size for .display-1 */
+}
+
+h2 {
+  font-size: 24px;
+  /* Custom font size for .display-2 */
+}
+
+h3 {
+  font-size: 16px;
+  /* Custom font size for .display-3 */
+}
+
+h4 {
+  font-size: 14px;
+  /* Custom font size for .display-4 */
+}
+
+.table-borderless {
+  max-width: 70%;
+  font-size: 16px;
+}

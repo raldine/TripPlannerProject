@@ -108,7 +108,7 @@ public class RouteController {
             model.addAttribute("modeRailOnly", true);
         }
 
-        if (newReq.getPref().equals("fewer transfers")) {
+        if (newReq.getPref().equals("Fewer Transfers")) {
             model.addAttribute("prefFewerTransfer", true);
 
         }
@@ -252,7 +252,7 @@ public class RouteController {
 
         }
 
-        return "redirect:/valid/" + username + "/route/" + id;
+        return "redirect:/valid/" + username + "/route/" + id + "#bus-container";
 
     }
 
@@ -268,7 +268,7 @@ public class RouteController {
 
         }
 
-        return "redirect:/valid/" + username + "/route/" + id;
+        return "redirect:/valid/" + username + "/route/" + id + "#train-container";
 
     }
 

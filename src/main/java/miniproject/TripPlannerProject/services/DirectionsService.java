@@ -665,11 +665,11 @@ public class DirectionsService {
                                                                                 .add("MRTShuttleDirection", "Both")))
                                                 .add("Message", Json.createArrayBuilder()
                                                                 .add(Json.createObjectBuilder()
-                                                                                .add("Content", "0901hrs : NEL - Additional travelling time of 20 minutes between Boon Keng and Dhoby Ghuat stations towards HarbourFront station due to a signal fault.")
+                                                                                .add("Content", "0901hrs : NSL - Additional travelling time of 20 minutes between Yishun and Kranji stations in both directions due to a signal fault.")
                                                                                 .add("CreatedDate",
                                                                                                 "2018-03-16 09:01:53"))
                                                                 .add(Json.createObjectBuilder()
-                                                                                .add("Content", "0888hrs : Message 2 NEL - Additional travelling time of 20 minutes between Boon Keng and Dhoby Ghuat stations towards HarbourFront station due to a signal fault.")
+                                                                                .add("Content", "0888hrs : NEL - Additional travelling time of 20 minutes between Boon Keng and Dhoby Ghuat stations towards HarbourFront station due to a signal fault.")
                                                                                 .add("CreatedDate",
                                                                                                 "2018-03-16 09:01:53"))))
                                 .build();
@@ -1036,7 +1036,7 @@ public class DirectionsService {
                                         String starttimePart = startIntervalwD.substring(11, 19); // From index 11 to 17
                                         String endtimePart = endIntervalwD.substring(11, 19);
 
-                                        String finalInterval = datePart + "," + starttimePart + " - " + endtimePart;
+                                        String finalInterval = datePart + ", " + starttimePart + " - " + endtimePart;
                                         trainDetailToMod.setRealTimeCrowdInterval(finalInterval);
 
                                         String realTimeCrowdLevel = "N/A";

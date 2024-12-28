@@ -101,9 +101,12 @@ public class UserService {
 
         try {
             ResponseEntity<String> resp = template.exchange(req, String.class);
-            if (resp.getStatusCode().toString().equals("202")) {
+            System.out.println(resp.getStatusCode().toString());
+            if (resp.getStatusCode().is2xxSuccessful()) {
                 String receivedPayload = resp.getBody();
                 reply = receivedPayload; // "OK"
+                System.out.println("userservice received " +  reply);
+                return reply;
 
             }
 
@@ -111,15 +114,13 @@ public class UserService {
 
             HttpStatusCode statusCode = ex.getStatusCode();
             String status = statusCode.toString();
-
-            // username exists
-            if (status.equals("401")) {
-                String errorPayload = ex.getResponseBodyAsString();
-                reply = errorPayload; ////"Either Username does not exist or Password is wrong"
-
-            }
-
-            return reply;
+            System.out.println("Login error code on user service: " + status);
+    
+            // // Extract the error payload from the response body
+            // String errorPayload = ex.getResponseBodyAsString();
+            // reply = errorPayload; // e.g., "Either Username does not exist or Password is wrong"
+            // System.out.println("User service received: " + reply);
+            // return reply;
         }
 
         return reply;

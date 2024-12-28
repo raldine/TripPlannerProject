@@ -61,11 +61,12 @@ public class AuthenticateRESTController {
 
         JsonReader reader = Json.createReader(new StringReader(payload));
         JsonObject jsonobj = reader.readObject();
-        
+        System.out.println("received on checkLogin " + jsonobj.toString() );
         String username = jsonobj.getString("username").toLowerCase();
         String password = jsonobj.getString("password");
 
         String reply = authserv.checkLogin(username, password);
+        System.out.println("checkLogin received this from repo " + reply);
 
 
         if(reply.equals("OK")){

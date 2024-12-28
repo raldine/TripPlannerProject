@@ -82,7 +82,7 @@ public class UserDetailsRepo {
         }
 
         if(userExists==true){
-            String correctPw = (String)hashOps.get(userList, loweruser);
+            String correctPw = hashOps.get(userList, loweruser).toString();
             if(password.equals(correctPw)){
                 pwCorrect = true;
                 System.out.println("password correct");

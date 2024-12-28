@@ -4,152 +4,272 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    // Function to update the time
+    function updateTime() {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString(); // Format the time
+      const dateString = now.toLocaleDateString(); // Format the date
+      document.getElementById('liveTime').textContent = `${dateString} ${timeString}`;
+    }
+
+    // Update the time every second
+    setInterval(updateTime, 1000);
+
+    // Initial call to display time immediately
+    document.addEventListener('DOMContentLoaded', updateTime);
+  </script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
   <link rel="stylesheet" href="/mapstyles.css">
   <title>Route Details</title>
 </head>
 
 <body>
+  <nav class="navbar sticky-top navbar-dark" style="background-color: #166649;">
+    <div class="container-fluid">
+      <a class="navbar-brand">TripPlanner</a>
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="/logoff">Logout</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+  <div class="page-container">
+    <h1>Your Planned Route:</h1>
+    <br>
+    <div class="card-header">
+      <span style="font-weight: bold;">Direction/Route Request:</span>
+    </div>
+    <div class="card-body" data-th-object="${request}">
+      <!-- <h5 class="card-title">Special title treatment</h5> -->
+      <p class="card-text"><span style="font-weight: bold;">Start Location:</span><br><span
+          data-th-text="*{oName}"></span>, <span data-th-text="*{oForA}"></span>
+      </p>
+      <p class="card-text"><span style="font-weight: bold;">End Location:</span><br><span
+          data-th-text="*{dName}"></span>,
+        <span data-th-text="*{dForA}"></span>
+      </p>
+      <p class="card-text"><span style="font-weight: bold;">Preferred Transit Options:</span><br><span
+          data-th-text="*{transportModes}"></span>, <span data-th-text="*{pref}"></span></p>
+    </div>
+    <div class="card-footer text-muted">
+      <span style="font-weight: bold;">Direction generated and are accurate as of:</span> <span
+        data-th-text="${createdon}"></span>
+    </div>
 
-  <div data-th-object="${request}">
-    <p>Request Was:</p>
-    <p>Start:</p>
-    <p><span data-th-text="*{oName}"></span>, <span data-th-text="*{oForA}"></span></p>
-    <p>End:</p>
-    <p><span data-th-text="*{dName}"></span>, <span data-th-text="*{dForA}"></span></p>
-    <p>Preferred Transit Options:</p>
-    <p><span data-th-text="*{transportModes}"></span>, <span data-th-text="*{pref}"></span></p>
-  </div><br>
-  <h2>Route/Direction generated on:<span data-th-text="${createdon}"></span></h2>
-  <br><br><br>
+    <br>
+    <div>
+      <a th:href="@{/valid/{username} (username=${username})}" class="btn btn-success"><svg
+          xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-left"
+          viewBox="0 2 16 16">
+          <path fill-rule="evenodd"
+            d="M6 12.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v2a.5.5 0 0 1-1 0v-2A1.5 1.5 0 0 1 6.5 2h8A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 5 12.5v-2a.5.5 0 0 1 1 0z" />
+          <path fill-rule="evenodd"
+            d="M.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L1.707 7.5H10.5a.5.5 0 0 1 0 1H1.707l2.147 2.146a.5.5 0 0 1-.708.708z" />
+        </svg> Back to Dashboard</a>
+    </div>
+    <br>
+    <div id="container">
+      <div id="map" style="float:left;height: 100%; width: 70%;"></div>
+      <div id="panel" style="float:right;width:30%;"></div>
+    </div>
+    <br>
 
-  <div id="container">
-    <div id="map" style="float:left;height: 100%; width: 70%;"></div>
-    <div id="panel" style="float:right;width:30%;"></div>
-</div>
-
-
-  <div data-th-object="${result}">
-    <p>Result Was:</p>
-    <p>Departure Time:</p>
-    <p><span data-th-text="*{departTime}"></span></p>
-    <p>Estimated Arrival Time:</p>
-    <p><span data-th-text="*{arrivalTime}"></span></p>
-    <p>Estimated Total Duration:</p>
-    <p><span data-th-text="*{totalDuration}"></span></p>
-    <p>Total Travel Distance:</p>
-    <p><span data-th-text="*{totalDistance}"></span></p>
-  </div><br>
-
-  <a th:href="@{/valid/{username} (username=${username}, id=${routeid})}">Back to Dashboard</a><br>
-  <br><br>
-
-  <!-- only show bus if true -->
-  <div data-th-if="${hasBus == true}">
-    <h1>Bus Stop Information</h1>
-    <table border="1" style="width: 600px; border-collapse: collapse;">
-      <thead>
+    <div id="result-container">
+      <table class="table table-borderless" style="background-color: #e1ebe7;" data-th-object="${result}">
         <tr>
-          <th>Bus Stop Name</th>
-          <th>Service Name</th>
-          <th>Next Bus</th>
-          <th>After</th>
-          <th>After</th>
-          <th>Number Of Stops</th>
-          <th>Bus Stop Code</th>
+          <td>
+            <span style="font-weight: bold;">Departure Time:</span><br><span data-th-text="*{departTime}">
+          </td>
+          <td>
+            <span style="font-weight: bold;">Est. Arrival Time:</span><br><span data-th-text="*{arrivalTime}"></span>
+          </td>
         </tr>
-      </thead>
-      <tbody>
-        <tr data-th-each="busInfo : ${busInfos}" data-th-object="${busInfo}">
-          <td data-th-text="*{busStopName}"></td>
-          <td data-th-text="*{name}"></td>
-          <td>
-            <span data-th-text="*{Eta1}"></span><br>
-            <span data-th-text="*{Load1}"></span><br>
-            <span data-th-text="*{busType1}"></span>
-          </td>
-          <td>
-            <span data-th-text="*{Eta2}"></span><br>
-            <span data-th-text="*{Load2}"></span><br>
-            <span data-th-text="*{busType2}"></span>
-          </td>
-          <td>
-            <span data-th-text="*{Eta3}"></span><br>
-            <span data-th-text="*{Load3}"></span><br>
-            <span data-th-text="*{busType3}"></span>
-          </td>
-          <td>
-            <span data-th-text="*{numStops}"></span>
-            <h3>get off at <span data-th-text="*{arrivalStop}"></span></h3>
-          </td>
-          <td data-th-text="*{busStopCode}"></td>
-        </tr>
-      </tbody>
-    </table>
-    <p>Bus data was fetched on: <span data-th-text="${busDateFetch}"></span>   <a th:href="@{/valid/{username}/route/{id}/updateBus(username=${username}, id=${routeid})}">Update Bus Information</a></p> 
-  </div>
-  <!-- end of bus segment -->
-  <hr>
-
-  <!-- start of train segment -->
-  <div data-th-if="${hasTrain == true}">
-    <h1>Train Information</h1>
-    <table border="1" style="width: 600px; border-collapse: collapse;">
-      <thead>
         <tr>
-          <th>Train Line</th>
-          <th>Depart from:</th>
-          <th>Real Time Crowd Level:</th>
-          <th>Number of Stops</th>
-          <th>Service Status:</th>
+          <td>
+            <span style="font-weight: bold;">Est. Total Duration:</span><br><span
+              data-th-text="*{totalDuration}"></span>
+          </td>
+          <td>
+            <span style="font-weight: bold;">Total Distance:</span><br><span data-th-text="*{totalDistance}"></span>
+          </td>
         </tr>
-      </thead>
-      <tbody>
-        <tr data-th-each="train : ${trainsInfo}" data-th-object="${train}">
-          <td>
-            <span data-th-text="*{trainLine}"></span><br>
-          </td>
-          <td>
-            <span data-th-text="*{trainStationCode}"></span>
-            <span data-th-text="*{departureStop}"></span><br>
-            <h3>towards <span data-th-text="*{trainToward}"></span></h3>
-          </td>
-          <td>
-            <span data-th-text="*{realTimeCrowdLevel}"></span><br>
-            <h3>as of today: <span data-th-text="*{realTimeCrowdInterval}"></span></h3>
-          </td>
-          <td>
-            <span data-th-text="*{numStops}"></span>
-            <h3>get off at <span data-th-text="*{arrivalStop}"></span></h3>
-          </td>
-          <td data-th-text="*{servStatus}"></td>
-        </tr>
-      </tbody>
-    </table>
-    <p>Train data was fetched on: <span data-th-text="${trainDataFetchOn}"></span>   <a th:href="@{/valid/{username}/route/{id}/updateTrain(username=${username}, id=${routeid})}">Update Train</a></p> 
+      </table>
+    </div>
+
+    <div id="button-time">
+      <div>
+        <a th:href="@{/valid/{username} (username=${username})}" class="btn btn-success"><svg
+            xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-left"
+            viewBox="0 2 16 16">
+            <path fill-rule="evenodd"
+              d="M6 12.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v2a.5.5 0 0 1-1 0v-2A1.5 1.5 0 0 1 6.5 2h8A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 5 12.5v-2a.5.5 0 0 1 1 0z" />
+            <path fill-rule="evenodd"
+              d="M.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L1.707 7.5H10.5a.5.5 0 0 1 0 1H1.707l2.147 2.146a.5.5 0 0 1-.708.708z" />
+          </svg> Back to Dashboard</a>
+      </div>
+      <div style="text-align: right;">
+        <h2><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-clock"
+            viewBox="0 0 20 20">
+            <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z" />
+            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0" />
+          </svg> Current Time: <span id="liveTime"></span></h2>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- only show bus if true -->
+    <div id="bus-container" data-th-if="${hasBus == true}">
+      <h2>Bus Stop Information</h2>
+      <div class="alert alert-primary" role="alert">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle"
+          viewBox="0 0 16 16">
+          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+          <path
+            d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
+        </svg>
+        Bus data was fetched on: <span data-th-text="${busDateFetch}" style="font-weight: bold;"></span> They will be
+        accurate for 20 seconds. <a
+          th:href="@{/valid/{username}/route/{id}/updateBus(username=${username}, id=${routeid})}"
+          class="alert-link">Get latest bus data.</a>
+      </div>
+      <!-- <p>Bus data was fetched on: <span data-th-text="${busDateFetch}"></span> <a
+          th:href="@{/valid/{username}/route/{id}/updateBus(username=${username}, id=${routeid})}">Update Bus
+          Information</a></p> -->
+      <table class="table tablebus">
+        <thead>
+          <tr>
+            <th>Bus Stop Name</th>
+            <th>Service Name</th>
+            <th>Next Bus</th>
+            <th>After</th>
+            <th>After</th>
+            <th>Number Of Stops</th>
+            <th>Bus Stop Code</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr data-th-each="busInfo : ${busInfos}" data-th-object="${busInfo}">
+            <td data-th-text="*{busStopName}"></td>
+            <td data-th-text="*{name}"></td>
+            <td>
+              <span data-th-text="*{Eta1}" th:style="|*{Eta1 == 'Arr' ? 'color: green; font-weight: bold;' : 
+              (Eta1 == 'Left' ? 'color: orange; font-weight: bold;' : 'color: black;') }|"></span><br>
+              <h4><span data-th-text="*{Load1}"></span></h4>
+              <small><span data-th-text="*{busType1}"></span></small>
+            </td>
+            <td>
+              <span data-th-text="*{Eta2}" th:style="|*{Eta2 == 'Arr' ? 'color: green; font-weight: bold;' : 
+              (Eta2 == 'Left' ? 'color: orange; font-weight: bold;' : 'color: black;') }|"></span><br>
+              <span data-th-text="*{Load2}"></span><br>
+              <span data-th-text="*{busType2}"></span>
+            </td>
+            <td>
+              <span data-th-text="*{Eta3}"></span><br>
+              <span data-th-text="*{Load3}"></span><br>
+              <span data-th-text="*{busType3}"></span>
+            </td>
+            <td>
+              <span data-th-text="*{numStops}"></span>
+              <h4>get off at <span data-th-text="*{arrivalStop}"></span></h4>
+            </td>
+            <td data-th-text="*{busStopCode}"></td>
+          </tr>
+        </tbody>
+      </table><br>
+      <hr>
+
+    </div>
+    <!-- end of bus segment -->
+
+
+    <!-- start of train segment -->
+    <div id="train-container" data-th-if="${hasTrain == true}">
+      <h2>Train Information</h2>
+      <div class="alert alert-primary" role="alert">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle"
+          viewBox="0 0 16 16">
+          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+          <path
+            d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
+        </svg>
+        Train data fetched on: <span data-th-text="${trainDataFetchOn}" style="font-weight: bold;"></span>. New 'Real
+        Time Train Crowd Level' data is
+        available approx. every 10 - 30 mins. <a
+          th:href="@{/valid/{username}/route/{id}/updateTrain(username=${username}, id=${routeid})}"
+          class="alert-link">Get latest real time train data.</a>
+      </div>
+      <table table class="table table-striped tabletrain">
+        <thead>
+          <tr>
+            <th>Train Line</th>
+            <th>Depart from:</th>
+            <th>Real Time Crowd Level:</th>
+            <th>Number of Stops</th>
+            <th>Service Status:</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr data-th-each="train : ${trainsInfo}" data-th-object="${train}">
+            <td>
+              <span data-th-text="*{trainLine}" th:style="|*{trainLine == 'East West Line' ? 'color: green; font-weight: bold;' : 
+              (trainLine == 'Circle Line' ? 'color: #fcad00; font-weight: bold;' :
+              (trainLine == 'Changi Airport Line' ? 'color: green; font-weight: bold;' :
+              (trainLine == 'North East Line' ? 'color: purple; font-weight: bold;' :
+              (trainLine == 'Thomson East Coast Line' ? 'color: brown; font-weight: bold;' :
+              (trainLine == 'Downtown Line' ? 'color: blue; font-weight: bold;' :
+              (trainLine == 'Bukit Panjang LRT' ? 'color: #4b5380; font-weight: bold;' :
+              (trainLine == 'Sengkang LRT' ? 'color: #7a577a; font-weight: bold;' :
+              (trainLine == 'Punggol LRT' ? 'color: #80426f; font-weight: bold;' :
+              (trainLine == 'North South Line' ? 'color: red; font-weight: bold;' : 'color: black;')))))))))}|"></span>
+            </td>
+
+            <td>
+              <span data-th-text="*{trainStationCode}"></span>
+              <span data-th-text="*{departureStop}" style="font-weight: bold;"></span><br>
+              <h4>towards <span data-th-text="*{trainToward}"></span></h4>
+            </td>
+            <td>
+              <span data-th-text="*{realTimeCrowdLevel}"></span><br>
+              <h4>as of: <span data-th-text="*{realTimeCrowdInterval}"></span></h4>
+            </td>
+            <td>
+              <span data-th-text="*{numStops}"></span>
+              <h4>get off at <span data-th-text="*{arrivalStop}" style="font-weight: bold;"></span></h4>
+            </td>
+            <td data-th-text="*{servStatus}" th:style="|*{servStatus == 'Disrupted' ? 'color: red; font-weight: bold;' : 
+            (servStatus == 'Normal' ? 'color: green; font-weight: bold;' : 'color: black;') }|">
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+    <!-- end of trian table -->
+
+    <!-- only show if there is disruption or recovery -->
+    <div id="service-alert" data-th-if="${hasDisrupt == true}">
+      <div class="card border-warning mb-3">
+        <div class="card-header">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+            class="bi bi-exclamation-triangle" viewBox="0 1.8 16 16">
+            <path
+              d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z" />
+            <path
+              d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z" />
+          </svg> Train Disruption Alert:
+        </div>
+        <ul class="list-group list-group-flush" data-th-each="message : ${MessageFromService}">
+          <li class="list-group-item" data-th-text="${message}"></li>
+        </ul>
+      </div>
+
+    </div>
+
   </div>
-  <!-- end of trian table -->
-
-  <!-- only show if there is disruption or recovery -->
-  <div data-th-if="${hasDisrupt == true}">
-
-    <table border="1" style="width: 600px; border-collapse: collapse;">
-      <thead>
-        <tr>
-          <th>Message from Train Operator(s):</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr data-th-each="message : ${MessageFromService}">
-          <td>
-            <span data-th-text="${message}"></span><br>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-  </div>
-  
-
   <script type="text/javascript" th:inline="javascript">
     function initMap() {
       const map = new google.maps.Map(document.getElementById("map"), {
@@ -178,11 +298,15 @@
 
     window.initMap = initMap;
   </script>
-  
 
-  
+
+
   <script async th:src="'https://maps.googleapis.com/maps/api/js?key=' + ${key} + '&loading=async&callback=initMap'">
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
+
 </body>
 
 </html>

@@ -228,10 +228,10 @@ public class LocationRequest {
             if (transportModes.size() == 2) {
 
                 this.prefTrans = "both";
-            } else if (transportModes.contains("bus")) {
+            } else if (transportModes.contains("Bus")) {
 
                 this.prefTrans = "bus";
-            } else if (transportModes.contains("train")) {
+            } else if (transportModes.contains("Train")) {
 
                 this.prefTrans = "rail";
             }

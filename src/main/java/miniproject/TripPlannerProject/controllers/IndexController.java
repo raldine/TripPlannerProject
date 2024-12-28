@@ -108,21 +108,31 @@ public class IndexController {
 
             String username = newDetails.getUsername().toLowerCase();
             String reply = userService.callToCheckLogin(newDetails);//"OK" or "Either Username does not exist or Password is wrong"
+            System.out.println("reply from repo" + reply);
 
-            if(reply.equals("Either Username does not exist or Password is wrong")){
+            if(newDetails.getUsername().isBlank()){
 
-                model.addAttribute("userDeet", newDetails); //passback keyed details
+                FieldError err1 = new FieldError("userDeet", "username", "Username cannot be left blank");
+    
+                bindings.addError(err1);
+    
+                return "index";
+    
+            }
+            // if (bindings.hasErrors()) {
+            //     model.addAttribute("userDeet", newDetails);
+            //     System.out.println("return because invalidation");
+            //     return "index";
+            // }
+
+            if(reply.equals("Either Username does not exist or Password is wrong") || reply.equals("Error")){
+
+                model.addAttribute("userDeet", new UsernamePassword()); //passback keyed details
                 model.addAttribute("unAuthorised", true);// show message
-                model.addAttribute("unAuthorMessage", reply+". Please try again.");
+                model.addAttribute("unAuthorMessage", "Either Username does not exist or Password is wrong. Please try again.");
     
                 return "index";
             }
-
-            if (bindings.hasErrors()) {
-
-                return "index";
-            }
-
 
             //else login success
             sess.setAttribute("username", username);
@@ -131,4 +141,26 @@ public class IndexController {
 
             return "redirect:/valid/"+username;
     }
+
+    @GetMapping("/logoff")
+    public String getCreateForm(
+        HttpSession sess,
+        Model model
+    ){
+        if(sess.getAttribute("username")!=null){        
+            if(!sess.getAttribute("username").equals("")){
+   
+            sess.removeAttribute("username");
+
+        }
+    }
+
+    sess.invalidate();
+
+ 
+
+        return "redirect:/";
+    }
+
+
 }

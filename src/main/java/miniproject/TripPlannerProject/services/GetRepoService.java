@@ -54,6 +54,7 @@ public class GetRepoService {
                             .createReader(new StringReader(retrievedObjects.get(key).toString())).readObject();
 
                     request = LocationRequest.fromJsonObjectToLR(locationRequest);
+                    
                     System.out.println("parsed Location Request>> " + request);
                 }
 
@@ -120,6 +121,16 @@ public class GetRepoService {
 
         return formattedDate;
 
+    }
+
+
+    public String toSentenceCase(String str) {
+        if (str == null || str.isEmpty()) {
+            return str;  
+        }
+        
+       
+        return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
     }
 
 }

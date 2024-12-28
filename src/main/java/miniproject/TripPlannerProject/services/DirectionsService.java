@@ -38,6 +38,7 @@ import jakarta.json.JsonReader;
 import miniproject.TripPlannerProject.models.BusDetails;
 import miniproject.TripPlannerProject.models.BusStopToCode;
 import miniproject.TripPlannerProject.models.LocationRequest;
+import miniproject.TripPlannerProject.models.QuickView;
 import miniproject.TripPlannerProject.models.ResultObj;
 import miniproject.TripPlannerProject.models.TrainCodeToStation;
 import miniproject.TripPlannerProject.models.TrainDetails;
@@ -45,7 +46,6 @@ import miniproject.TripPlannerProject.models.TrainService;
 import miniproject.TripPlannerProject.models.TransitDetails;
 import miniproject.TripPlannerProject.repositories.DirectonsRepository;
 import miniproject.TripPlannerProject.repositories.UserDetailsRepo;
-
 
 @Service
 public class DirectionsService {
@@ -64,7 +64,7 @@ public class DirectionsService {
         private String get_train_RealTimeCrowd = "https://datamall2.mytransport.sg/ltaodataservice/PCDRealTime";
         private String get_train_Service_Alert = "https://datamall2.mytransport.sg/ltaodataservice/TrainServiceAlerts";
 
-        //to replace with insertion later
+        // to replace with insertion later
         private String ltaAPI1 = "fc9gZM/bTiSihnmKGWlWVw==";
         private String ltaAPI2 = "V7uALdNjQkGOzz9aOYA7Yg==";
 
@@ -347,7 +347,8 @@ public class DirectionsService {
 
         // process Buses and Trains Details to SAVE to Repo (TransitDetails --> Bus
         // details and Train details)
-        public List<BusDetails> processResultObj(String username, ResultObj result, LocationRequest requested) throws IOException {
+        public List<BusDetails> processResultObj(String username, ResultObj result, LocationRequest requested)
+                        throws IOException {
 
                 System.out.println("this is from service side >>>>>>>");
                 System.out.println("result id is " + result.getKeyid());
@@ -454,14 +455,13 @@ public class DirectionsService {
 
                 }
 
-
                 prepAllForInsertion(username, requested, result, busesInfo, finalTrainList);
 
                 return busesInfo; // to remove
 
         }
 
-        // insert to repo
+        // insert to repo PLUS PRODUCE QUICKVIEW
         public void prepAllForInsertion(String username, LocationRequest req, ResultObj result,
                         List<BusDetails> busesInfo, List<TrainDetails> trainsInfo) {
                 // SAVE
@@ -472,6 +472,82 @@ public class DirectionsService {
                 Instant instantC = cZonedDateTime.toInstant();
                 long createdTimeLong = instantC.toEpochMilli();
                 String createdTimeLongString = String.valueOf(createdTimeLong);
+
+                // quickView stuff
+                QuickView newToInsert = new QuickView();
+                DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+                DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a");
+                String formattedDate = currDateTime.format(dateFormatter);
+                String formattedTime = currDateTime.format(timeFormatter);
+                String formattedDateTime = formattedDate + "\n" + formattedTime;
+                newToInsert.setCreatedOn(formattedDateTime);
+                newToInsert.setOriginName(req.getoName());
+                newToInsert.setDestName(req.getdName());
+                String departTime = result.getDepartTime();
+                String arrTime = result.getArrivalTime();
+                String datePart = departTime.substring(0, 10);
+                String departTimepart = departTime.substring(11, 19);
+                String arrtimepart = arrTime.substring(11, 19);
+                String finalTime = datePart + "\n" + departTimepart + " to " + arrtimepart;
+                newToInsert.setPrefTime(finalTime);
+                List<String> tempList = req.getTransportModes();
+                StringBuilder tempSB = new StringBuilder();
+                for (String s : tempList) {
+                        tempSB.append(s);
+                        tempSB.append(", ");
+                }
+                String almost = tempSB.toString();
+                String trimmed = almost.trim();
+                String finalStr = trimmed.substring(0, trimmed.length() - 1);
+                newToInsert.setPrefTransport(finalStr);
+                String forBuses = "";
+                if (busesInfo.size() != 0) {
+                        for (BusDetails bd : busesInfo) {
+                                forBuses = forBuses + bd.getName() + ", ";
+                        }
+                } else {
+                        forBuses = "N/A";
+                }
+                if (!forBuses.equals("N/A")) {
+                        String trimmedbus = forBuses.trim();
+                        String finalForbus = trimmedbus.substring(0, trimmedbus.length() - 1);
+                        newToInsert.setBuses(finalForbus);
+
+                } else {
+                        newToInsert.setBuses("N/A");
+                }
+                List<String> perTrainString = new LinkedList<>();
+                if (trainsInfo.size() != 0) {
+                        for (TrainDetails td : trainsInfo) {
+                                String toAdd = td.getTrainStationCode() + " " + td.getDepartureStop() + " to "
+                                                + td.getArrivalStop();
+                                perTrainString.add(toAdd);
+                        }
+
+                        StringBuilder trainFinal = new StringBuilder();
+
+                        for (int i = 0; i < perTrainString.size(); i++) {
+                                trainFinal.append(perTrainString.get(i));
+                                if (i < perTrainString.size() - 1) { // Avoid adding "\n" after the last element
+                                        trainFinal.append("\n");
+                                }
+                        }
+                        String trainFinalStringBuilt = trainFinal.toString();
+
+                        newToInsert.setTrainCodeAndName(trainFinalStringBuilt);
+                } else {
+                        newToInsert.setTrainCodeAndName("N/A");
+                }
+                newToInsert.setTrainTowards("N/A");
+                newToInsert.setKeyid(req.getKeyid());
+                newToInsert.setPrefTravelOp(req.getPref());
+                System.out.println("from service !!@@@@@@@@@@@@@ " + newToInsert.toString());
+                
+                JsonObject quickViewInJson = newToInsert.quickViewToJsonObject();
+                userService.putQuickViewIntoRepo(username, quickViewInJson);
+                //////// end of quickView
+ 
+
 
                 // to put in repo" LocationRequest, Result, Bus or/And Train details,
                 // createdTime
@@ -486,9 +562,8 @@ public class DirectionsService {
                 // businfo to JsonArray of busJson + trainlist to JsonArray
                 JsonArrayBuilder busArrayBuilder = Json.createArrayBuilder();
                 JsonArrayBuilder trainArrayBuilder = Json.createArrayBuilder();
-                
 
-                //update userRouteList
+                // update userRouteList
                 userService.updateUserRouteList(checkUsername, id);
 
                 // insert to repo (if bus details have, no train details)
@@ -669,7 +744,7 @@ public class DirectionsService {
                                                                                 .add("CreatedDate",
                                                                                                 "2018-03-16 09:01:53"))
                                                                 .add(Json.createObjectBuilder()
-                                                                                .add("Content", "0888hrs : NEL - Additional travelling time of 20 minutes between Boon Keng and Dhoby Ghuat stations towards HarbourFront station due to a signal fault.")
+                                                                                .add("Content", "0813hrs : NEL - Additional travelling time of 20 minutes between Boon Keng and Dhoby Ghuat stations towards HarbourFront station due to a signal fault.")
                                                                                 .add("CreatedDate",
                                                                                                 "2018-03-16 09:01:53"))))
                                 .build();
@@ -769,7 +844,7 @@ public class DirectionsService {
                         ;
                         List<String> messagesString = new LinkedList<>();
                         // put in reverse because latest message is first in original
-                        for (int o = 0 ; o < messagesArray.size(); o++) {
+                        for (int o = 0; o < messagesArray.size(); o++) {
                                 JsonObject oneMessagObject = messagesArray.getJsonObject(o);
                                 String messageContent = oneMessagObject.getString("Content");
                                 messagesString.add(messageContent);
@@ -782,7 +857,7 @@ public class DirectionsService {
                 if (status == 2 && messagesArray.size() != 0) {
                         List<String> messagesString = new LinkedList<>();
 
-                        for (int o = 0 ; o < messagesArray.size(); o++) {
+                        for (int o = 0; o < messagesArray.size(); o++) {
                                 JsonObject oneMessagObject = messagesArray.getJsonObject(o);
                                 String messageContent = oneMessagObject.getString("Content");
                                 messagesString.add(messageContent);
@@ -935,13 +1010,13 @@ public class DirectionsService {
                         if (minutes.contains("-")) {
                                 minutes = "Left";
                         }
-                        if(minutes.equals("")){
+                        if (minutes.equals("")) {
                                 minutes = "N/A";
                         }
                         // System.out.println("minutes now is " + minutes);
                 }
 
-                if (minutes.equals("Arr") || minutes.equals("Left") || minutes.equals("N/A") ) {
+                if (minutes.equals("Arr") || minutes.equals("Left") || minutes.equals("N/A")) {
                         minutesFinal = minutes;
                 } else {
                         minutesFinal = minutes + "min(s)";

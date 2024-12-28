@@ -90,6 +90,7 @@ public class TrainCodeToStation {
         // changi airport line
         this.CGline.put("Expo", "CG1");
         this.CGline.put("Changi Airport", "CG2");
+        this.CGline.put("Tanah Merah", "EW4");
 
         // North east line
         this.NEline.put("HarbourFront", "NE1");

@@ -78,6 +78,7 @@
     <br>
 
     <div id="result-container">
+      <h3>About your journey:</h3>
       <table class="table table-borderless" style="background-color: #e1ebe7;" data-th-object="${result}">
         <tr>
           <td>
@@ -133,8 +134,9 @@
         </svg>
         Bus data was fetched on: <span data-th-text="${busDateFetch}" style="font-weight: bold;"></span> They will be
         accurate for 20 seconds. <a
-          th:href="@{/valid/{username}/route/{id}/updateBus(username=${username}, id=${routeid})}"
-          class="alert-link">Get latest bus data.</a>
+          th:href="@{/valid/{username}/route/{id}/updateBus(username=${username}, id=${routeid})}" class="alert-link"
+          data-bs-toggle="tooltip" data-bs-placement="top" title="Please only refresh every 20s.">Get latest bus
+          data.</a>
       </div>
       <!-- <p>Bus data was fetched on: <span data-th-text="${busDateFetch}"></span> <a
           th:href="@{/valid/{username}/route/{id}/updateBus(username=${username}, id=${routeid})}">Update Bus
@@ -156,21 +158,25 @@
             <td data-th-text="*{busStopName}"></td>
             <td data-th-text="*{name}"></td>
             <td>
-              <span data-th-text="*{Eta1}" th:style="|*{Eta1 == 'Arr' ? 'color: green; font-weight: bold;' : 
-              (Eta1 == 'Left' ? 'color: orange; font-weight: bold;' : 'color: black;') }|"></span><br>
+              <span data-th-text="*{Eta1}"
+                th:style="|*{Eta1 == 'Arr' ? 'color: green; font-weight: bold;' : 
+              (Eta1 == 'Left' ? 'color: orange; font-weight: bold;' : 'color: black; font-weight: bold;') }|"></span><br>
               <h4><span data-th-text="*{Load1}"></span></h4>
               <small><span data-th-text="*{busType1}"></span></small>
             </td>
             <td>
-              <span data-th-text="*{Eta2}" th:style="|*{Eta2 == 'Arr' ? 'color: green; font-weight: bold;' : 
-              (Eta2 == 'Left' ? 'color: orange; font-weight: bold;' : 'color: black;') }|"></span><br>
-              <span data-th-text="*{Load2}"></span><br>
-              <span data-th-text="*{busType2}"></span>
+              <span data-th-text="*{Eta2}"
+                th:style="|*{Eta2 == 'Arr' ? 'color: green; font-weight: bold;' : 
+              (Eta2 == 'Left' ? 'color: orange; font-weight: bold;' : 'color: black; font-weight: bold;') }|"></span><br>
+              <h4><span data-th-text="*{Load2}"></span></h4>
+              <small><span data-th-text="*{busType2}"></span></small>
             </td>
             <td>
-              <span data-th-text="*{Eta3}"></span><br>
-              <span data-th-text="*{Load3}"></span><br>
-              <span data-th-text="*{busType3}"></span>
+              <span data-th-text="*{Eta3}"
+                th:style="|*{Eta3 == 'Arr' ? 'color: green; font-weight: bold;' : 
+              (Eta3 == 'Left' ? 'color: orange; font-weight: bold;' : 'color: black; font-weight: bold;') }|"></span><br>
+              <h4><span data-th-text="*{Load3}"></span></h4>
+              <small><span data-th-text="*{busType3}"></span></small>
             </td>
             <td>
               <span data-th-text="*{numStops}"></span>
@@ -188,7 +194,7 @@
 
     <!-- start of train segment -->
     <div id="train-container" data-th-if="${hasTrain == true}">
-      <h2>Train Information</h2>
+      <h2>Train/LRT Information</h2>
       <div class="alert alert-primary" role="alert">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle"
           viewBox="0 0 16 16">
@@ -197,19 +203,24 @@
             d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
         </svg>
         Train data fetched on: <span data-th-text="${trainDataFetchOn}" style="font-weight: bold;"></span>. New 'Real
-        Time Train Crowd Level' data is
+        Time Crowd Level' data is
         available approx. every 10 - 30 mins. <a
-          th:href="@{/valid/{username}/route/{id}/updateTrain(username=${username}, id=${routeid})}"
-          class="alert-link">Get latest real time train data.</a>
+          th:href="@{/valid/{username}/route/{id}/updateTrain(username=${username}, id=${routeid})}" class="alert-link"
+          data-bs-toggle="tooltip" data-bs-placement="top" title="Please only refresh every 10-20m.">Get latest real
+          time train data.</a>
       </div>
       <table table class="table table-striped tabletrain">
         <thead>
           <tr>
             <th>Train Line</th>
-            <th>Depart from:</th>
-            <th>Real Time Crowd Level:</th>
+            <th>Depart from</th>
+            <th>Real Time Crowd Level <svg data-bs-toggle="tooltip" data-bs-placement="top"
+                title="Indicates crowdedness of departure train platform." xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-question-circle" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286m1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94"/>
+              </svg></th>
             <th>Number of Stops</th>
-            <th>Service Status:</th>
+            <th>Service Status</th>
           </tr>
         </thead>
         <tbody>
@@ -270,6 +281,16 @@
     </div>
 
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+      });
+    });
+  </script>
+
   <script type="text/javascript" th:inline="javascript">
     function initMap() {
       const map = new google.maps.Map(document.getElementById("map"), {

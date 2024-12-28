@@ -1,6 +1,7 @@
 package miniproject.TripPlannerProject.controllers;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -9,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,10 +19,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import miniproject.TripPlannerProject.models.BusDetails;
 import miniproject.TripPlannerProject.models.LocationRequest;
+import miniproject.TripPlannerProject.models.QuickView;
 import miniproject.TripPlannerProject.models.ResultObj;
 import miniproject.TripPlannerProject.models.TrainDetails;
 import miniproject.TripPlannerProject.models.TrainService;
@@ -52,21 +58,32 @@ public class RouteController {
             @PathVariable(required = true) String username,
             HttpSession sess,
             Model model) {
-        // String currUsername = "";
-        // check if authorised]
-        // if(sess.getAttribute("username")!=null){
-        // if(!sess.getAttribute("username").equals("")){
-        // currUsername = sess.getAttribute("username").toString();
-        // if(username.toLowerCase()!=currUsername){
-        // return "unauthorised";
-        // }
-        // }
-        // }
-        System.out.println("ON USERINDEX PAGE THE USERNAME IS " + sess.getAttribute("username").toString());
-        System.out.println("from route controller>>: " + sess.getAttribute("username").toString());
-        String usernameGotten = sess.getAttribute("username").toString();
-        List<String> toPrint = userService.getUserRouteList(usernameGotten);
 
+        List<ObjectError> gloErrors;
+
+        if (sess.getAttribute("username") != null) {
+            System.out.println("HEYHEYHEY " + sess.getAttribute("username").toString());
+        }
+
+        if (sess.getAttribute("globalErrors") != null) {
+            gloErrors = (List<ObjectError>) sess.getAttribute("globalErrors");
+            model.addAttribute("globalErrors", gloErrors);
+            sess.removeAttribute("globalErrors");
+        }
+
+        List<QuickView> dummylist = new LinkedList<>();
+        model.addAttribute("hasRoutes", false);
+        model.addAttribute("quickviews", dummylist);
+
+        List<String> toPrint = userService.getUserRouteList(username);
+
+        if (toPrint.size() != 0) {
+            List<QuickView> itemsToTable = userService.getQuickViewfromRepo(username, toPrint);
+            if (itemsToTable.size() != 0) {
+                model.addAttribute("hasRoutes", true);
+                model.addAttribute("quickviews", itemsToTable);
+            }
+        }
         // prep for new calculation
         sess.setAttribute("routeResult", "");
         sess.setAttribute("busInfos", "");
@@ -85,16 +102,61 @@ public class RouteController {
             model.addAttribute("listOfSavedRoutes", toPrint);
         }
 
-        // service.getBusStopCodes();
-
         return "userindex";
     }
 
     @PostMapping("/getDirections")
     public String getDirections(
-            @ModelAttribute("req") LocationRequest newReq,
+            @Valid @ModelAttribute("req") LocationRequest newReq,
+            BindingResult bindings,
             HttpSession sess,
             Model model) {
+
+        String usernameToInsert = "";
+
+        if (sess.getAttribute("username") != null) {
+            System.out.println("HEYHEYHEY getDirections" + sess.getAttribute("username").toString());
+            usernameToInsert = sess.getAttribute("username").toString();
+        }
+
+        if (newReq.getOlatitude().equals("N/A")) {
+            ObjectError startLocationError = new ObjectError(
+                    "globalError",
+                    "Start Location cannot be blank");
+            bindings.addError(startLocationError);
+
+        }
+
+        if (newReq.getDlongtitude().equals("N/A")) {
+            ObjectError endLocationError = new ObjectError(
+                    "globalError",
+                    "End Location cannot be blank");
+            bindings.addError(endLocationError);
+
+        }
+
+        if (newReq.getDepTime().isEmpty() && newReq.getArrTime().isEmpty()) {
+            ObjectError timeEmptyError = new ObjectError(
+                    "globalError",
+                    "Please enter EITHER the departure time OR preferred arrival time.");
+            bindings.addError(timeEmptyError);
+
+        }
+
+        if (!newReq.getDepTime().isEmpty() && !newReq.getArrTime().isEmpty()) {
+            ObjectError moreThanOneTimeError = new ObjectError(
+                    "globalError",
+                    "Please enter EITHER the departure time OR preferred arrival time.");
+            bindings.addError(moreThanOneTimeError);
+
+        }
+
+        if (bindings.hasGlobalErrors()) {
+            model.addAttribute("globalErrors", bindings.getGlobalErrors());
+            sess.setAttribute("globalErrors", bindings.getGlobalErrors());
+
+            return "redirect:/valid/" + usernameToInsert;
+        }
 
         newReq.prepForCall();
 
@@ -121,6 +183,7 @@ public class RouteController {
             model.addAttribute("arrivalTime", Long.parseLong(newReq.getaTimeInEpoch()));
         }
 
+        model.addAttribute("username", usernameToInsert);
         model.addAttribute("key", googleKey);
         System.out.println("requested the following: " + newReq.toString());
         sess.setAttribute("currRequest", newReq);
@@ -270,6 +333,19 @@ public class RouteController {
 
         return "redirect:/valid/" + username + "/route/" + id + "#train-container";
 
+    }
+
+    @GetMapping("/delete")
+    public String deleteItem(
+            @RequestParam String id,
+            @RequestParam String username) {
+
+        System.out.println("Deleting item with ID: " + id + " for user: " + username);
+
+        userService.removeIDfromUserList(username, id);
+        userService.removeAllItemsfromUser(username, id);
+
+        return "redirect:/valid/" + username;
     }
 
 }

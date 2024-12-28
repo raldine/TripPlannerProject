@@ -1,7 +1,6 @@
 package miniproject.TripPlannerProject.services;
 
-
-
+import java.io.StringReader;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -16,6 +15,8 @@ import org.springframework.web.client.RestTemplate;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
+import miniproject.TripPlannerProject.models.QuickView;
 import miniproject.TripPlannerProject.models.UsernamePassword;
 import miniproject.TripPlannerProject.repositories.UserDetailsRepo;
 
@@ -41,42 +42,51 @@ public class UserService {
 
     public String callToCreateAcc(UsernamePassword details) {
 
-        String reply = "Error";
+        String reply = "Error on Service Side";
 
         JsonObject converted = receivedUserDetailToJson(details);
+        System.out.println("received on userservice side" + converted.toString());
 
         // call my restController
 
         RequestEntity<String> req = RequestEntity
                 .post(checkCreateURL)
                 .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.TEXT_PLAIN)
+                .accept(MediaType.APPLICATION_JSON)
                 .body(converted.toString(), String.class);
 
         RestTemplate template = new RestTemplate();
 
         try {
             ResponseEntity<String> resp = template.exchange(req, String.class);
-            if (resp.getStatusCode().toString().equals("201")) {
+            if (resp.getStatusCode().is2xxSuccessful()) {
                 String receivedPayload = resp.getBody();
-                reply = receivedPayload; // "OK"
+                
 
+                JsonReader reader = Json.createReader(new StringReader(receivedPayload));
+                JsonObject toread = reader.readObject();
+
+                String replyFromRest = toread.getString("message");
+                System.out.println("SERVICE SIDE WHEN CREATED NEW ACCOUNT REPLY FROM REST CONTROL IS " + replyFromRest);
+                reply = replyFromRest;
+
+                return reply;
             }
 
         } catch (HttpClientErrorException ex) {
 
             HttpStatusCode statusCode = ex.getStatusCode();
-            String status = statusCode.toString();
-            System.out.println(ex.getResponseBodyAsString());
+            String receivedPayload = ex.getResponseBodyAsString();
+                
 
-            // username exists
-            if (status.equals("409")) {
-                String errorPayload = ex.getResponseBodyAsString();
-                reply = errorPayload; // "User already exists, use another username"
+            // JsonReader reader = Json.createReader(new StringReader(receivedPayload));
+            // JsonObject toread = reader.readObject();
 
-            }
+            // String replyFromRest = toread.getString("message");
+            // System.out.println("SERVICE SIDE WHEN CREATED NEW ACCOUNT REPLY FROM REST CONTROL IS " + replyFromRest);
+            // reply = replyFromRest;
 
-            return reply;
+            // return reply;
         }
 
         return reply;
@@ -85,7 +95,7 @@ public class UserService {
 
     public String callToCheckLogin(UsernamePassword details) {
 
-        String reply = "Error";
+        String reply = "Error on service Side";
 
         JsonObject converted = receivedUserDetailToJson(details);
 
@@ -94,7 +104,7 @@ public class UserService {
         RequestEntity<String> req = RequestEntity
                 .post(checkLoginURL)
                 .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.TEXT_PLAIN)
+                .accept(MediaType.APPLICATION_JSON)
                 .body(converted.toString(), String.class);
 
         RestTemplate template = new RestTemplate();
@@ -104,8 +114,13 @@ public class UserService {
             System.out.println(resp.getStatusCode().toString());
             if (resp.getStatusCode().is2xxSuccessful()) {
                 String receivedPayload = resp.getBody();
-                reply = receivedPayload; // "OK"
-                System.out.println("userservice received " +  reply);
+
+                JsonReader reader = Json.createReader(new StringReader(receivedPayload));
+                JsonObject toread = reader.readObject();
+
+                String replyFromRest = toread.getString("message");
+                System.out.println("SERVICE SIDE WHEN LOGIN ACCOUNT REPLY FROM REST CONTROL IS " + replyFromRest);
+                reply = replyFromRest;
                 return reply;
 
             }
@@ -115,41 +130,79 @@ public class UserService {
             HttpStatusCode statusCode = ex.getStatusCode();
             String status = statusCode.toString();
             System.out.println("Login error code on user service: " + status);
-    
-            // // Extract the error payload from the response body
-            // String errorPayload = ex.getResponseBodyAsString();
-            // reply = errorPayload; // e.g., "Either Username does not exist or Password is wrong"
-            // System.out.println("User service received: " + reply);
-            // return reply;
+            String receivedPayload = ex.getResponseBodyAsString();
+            System.out.println("service what is ex.getRes " + receivedPayload);
+            // JsonReader reader = Json.createReader(new StringReader(receivedPayload));
+            // JsonObject toread = reader.readObject();
+
+            // String replyFromRest = toread.getString("message");
+            // System.out.println("SERVICE SIDE WHEN LOGIN ACCOUNT REPLY FROM REST CONTROL IS " + replyFromRest);
+            // reply = replyFromRest;
         }
 
         return reply;
 
     }
 
-    public void updateUserRouteList(String username, String keyid){
+    public void updateUserRouteList(String username, String keyid) {
 
         userrepo.updateUserRouteList(username, keyid);
 
     }
 
-    public List<String> getUserRouteList(String username){
+    public void putQuickViewIntoRepo(String username, JsonObject qVinJson){
+
+        userrepo.putQuickView(username, qVinJson);
+    }
+
+    public List<String> getUserRouteList(String username) {
 
         List<Object> fromRepo = userrepo.getUserRouteList(username);
         List<String> finaList = new LinkedList<>();
 
-        for(Object o :  fromRepo){
+        for (Object o : fromRepo) {
 
             String temp = o.toString();
             finaList.add(temp);
 
         }
 
-
         return finaList;
 
-        
     }
 
+    public List<QuickView> getQuickViewfromRepo(String username, List<String> userRList) {
+
+        List<Object> allQVJsonObject = userrepo.getQuickViewObjects(username, userRList);
+
+        List<QuickView> finalList = new LinkedList<>();
+
+        if (allQVJsonObject.size() != 0) {
+            for (Object ob : allQVJsonObject) {
+
+                QuickView temp = new QuickView();
+
+                JsonObject jsonTemp = Json.createReader(new StringReader(ob.toString())).readObject();
+
+                temp = QuickView.fromJsonToQuickView(jsonTemp);
+
+                finalList.add(temp);
+
+            }
+
+        }
+
+        return finalList;
+    }
+
+    public void removeIDfromUserList(String username, String keyid){
+
+        userrepo.removeIDfromUserRouteList(username, keyid);
+    }
+
+    public void removeAllItemsfromUser(String username, String keyid){
+        userrepo.removeAllWithUserKeyID(username, keyid);
+
+    }
 
 }

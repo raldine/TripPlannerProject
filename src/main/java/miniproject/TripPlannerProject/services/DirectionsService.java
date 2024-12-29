@@ -769,7 +769,7 @@ public class DirectionsService {
                 TrainService result = new TrainService();
 
                 // this condition for demo only
-                if (keyid.equals("b8e68d2b") && user.equals("freddy")) {
+                if (keyid.equals("508c2f2b") && user.equals("freddy")) {
                         System.out.println("fake call to fake api activated");
                         // DEMO ONLY FOR FAKE TRAIN FAILURE RESPONSE - call own server acting as train
                         // api with disruption repsonse

@@ -224,7 +224,7 @@ public class RouteController {
 
         }
 
-        return "redirect:/valid/" + username + "/route/" + keyID;
+        return "redirect:https://peaceful-presence-production.up.railway.app/valid/" + username + "/route/" + keyID;
 
     }
 

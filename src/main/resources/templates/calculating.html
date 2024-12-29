@@ -86,7 +86,7 @@
                 .then((result) => {
                     console.log('Route Result:', result);
 
-                    fetch('/valid/processing/sendJsonResult', {
+                    fetch('https://peaceful-presence-production.up.railway.app/valid/processing/sendJsonResult', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

@@ -1,6 +1,8 @@
 package miniproject.TripPlannerProject.controllers;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -120,6 +122,8 @@ public class RouteController {
 
         String usernameToInsert = "";
 
+   
+
         if (sess.getAttribute("username") != null) {
             System.out.println("HEYHEYHEY getDirections" + sess.getAttribute("username").toString());
             usernameToInsert = sess.getAttribute("username").toString();
@@ -155,6 +159,32 @@ public class RouteController {
                     "Please enter EITHER the departure time OR preferred arrival time.");
             bindings.addError(moreThanOneTimeError);
 
+        }
+
+             //for date check now:
+             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+             LocalDateTime currentDateTime = LocalDateTime.now();
+
+        if(!newReq.getDepTime().isEmpty()){
+
+            LocalDateTime inputDateTime = LocalDateTime.parse(newReq.getDepTime(), formatter);
+            if (inputDateTime.isBefore(currentDateTime)) {
+                ObjectError depTimeBeforeNow = new ObjectError(
+                    "globalError",
+                    "Your departure time cannot be before current time and date.");
+            bindings.addError(depTimeBeforeNow);
+            }
+        }
+
+        if(!newReq.getArrTime().isEmpty()){
+
+            LocalDateTime inputDateTime = LocalDateTime.parse(newReq.getArrTime(), formatter);
+            if (inputDateTime.isBefore(currentDateTime)) {
+                ObjectError arrTimeBeforeNow = new ObjectError(
+                    "globalError",
+                    "Your preferred arrival time cannot be before current time and date.");
+            bindings.addError(arrTimeBeforeNow);
+            }
         }
 
         if (bindings.hasGlobalErrors()) {

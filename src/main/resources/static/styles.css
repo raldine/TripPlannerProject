@@ -13,22 +13,44 @@ id -> # */
   margin-top: 100px;  
   margin-bottom: 100px;
   display: flex;
-  flex-direction: column; /* Stack elements vertically */
-  justify-content: center; /* Vertically center-align the children */
-  align-items: center; /* Horizontally center-align the children */
+  flex-direction: column; 
+  justify-content: center;
+  align-items: center; 
 }
+
+#form-card-split{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 36px; 
+
+}
+
+#float-right-form{
+  flex: 1 1 auto; /* Allow elements to grow and shrink */
+  min-width: 360px; /* Minimum width for each element */
+}
+
+#float-left-card{
+  flex: 1 1 auto; /* Allow elements to grow and shrink */
+  min-width: 400px; /* Minimum width for each element */
+}
+
 
 .error{
     color: darkred;
     font-size: small;
   }
+  .errorForm{
+    color: darkred;
+    font-size: 16px;
+  }
   
   #autocomplete {
-      width: 640px; /* Set the desired width */
+      width: 360px;
   
     }
   #destination {
-      width: 640px; /* Set the desired width */
+      width: 360px; 
   
     }
   

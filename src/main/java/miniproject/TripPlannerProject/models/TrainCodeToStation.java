@@ -34,7 +34,7 @@ public class TrainCodeToStation {
         this.NSline.put("Woodlands", "NS9");
         this.NSline.put("Admiralty", "NS10");
         this.NSline.put("Sembawang", "NS11");
-        this.NSline.put("Canberra", "NS12");
+        this.NSline.put("Canberra Station (NS12)", "NS12");
         this.NSline.put("Yishun", "NS13");
         this.NSline.put("Khatib", "NS14");
         this.NSline.put("Yio Chu Kang", "NS15");

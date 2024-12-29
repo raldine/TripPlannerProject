@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
@@ -27,8 +28,12 @@ public class UserService {
     private UserDetailsRepo userrepo;
 
     // to replace with insertion later
-    private final String checkCreateURL = "http://localhost:8080/authen/checkCreate";
-    private final String checkLoginURL = "http://localhost:8080/authen/checkLogin";
+
+    @Value("${check.createacc.url}")
+    private String checkCreateURL;
+
+    @Value("${check.loginacc.url}")
+    private String checkLoginURL;
 
     public JsonObject receivedUserDetailToJson(UsernamePassword details) {
 

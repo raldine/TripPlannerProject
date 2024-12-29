@@ -249,8 +249,12 @@ public class LocationRequest {
                 "destination: " + formatDestin);
         this.dLatLng = formatDestin;
 
-        this.keyid = genUUID();
-        System.out.println("this request is tagged to " + this.keyid);
+       
+        if(this.keyid.equals("N/A")){
+
+            this.keyid = genUUID();
+            System.out.println("this request is tagged to " + this.keyid);
+        }
 
     }
 

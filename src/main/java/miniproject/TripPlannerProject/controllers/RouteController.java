@@ -60,6 +60,13 @@ public class RouteController {
             Model model) {
 
         List<ObjectError> gloErrors;
+        if (sess.getAttribute("username") == null) {
+            return "unauthorised";
+        }
+
+        if (sess.getAttribute("username") != null && !username.equals(sess.getAttribute("username").toString())) {
+            return "unauthorised";
+        }
 
         if (sess.getAttribute("username") != null) {
             System.out.println("HEYHEYHEY " + sess.getAttribute("username").toString());
@@ -92,7 +99,6 @@ public class RouteController {
         sess.setAttribute("trainsInfo", "");
         sess.setAttribute("createdon", "");
 
-        model.addAttribute("userLocation", new LocationRequest());
         model.addAttribute("key", googleKey); // for geocoding and autocompelte
         model.addAttribute("req", new LocationRequest());
         model.addAttribute("listOfSavedRoutes", toPrint);
@@ -105,7 +111,7 @@ public class RouteController {
         return "userindex";
     }
 
-    @PostMapping("/getDirections")
+    @PostMapping("/processing/getDirections")
     public String getDirections(
             @Valid @ModelAttribute("req") LocationRequest newReq,
             BindingResult bindings,
@@ -163,6 +169,7 @@ public class RouteController {
         model.addAttribute("oLatLng", newReq.getoLatLng());
         model.addAttribute("dLatLng", newReq.getdLatLng());
         model.addAttribute("keyid", newReq.getKeyid());
+        System.out.println("after post, this request has id of " + newReq.getKeyid());
 
         if (newReq.getPrefTrans().equals("both")) {
             model.addAttribute("modeBothBusAndRail", true);
@@ -188,13 +195,13 @@ public class RouteController {
         System.out.println("requested the following: " + newReq.toString());
         sess.setAttribute("currRequest", newReq);
 
-        // SAVE REQUEST INTO REPO
+        // pass to javascript
 
         return "calculating";
 
     }
 
-    @PostMapping("/sendJsonResult")
+    @PostMapping("/processing/sendJsonResult")
     public String getResult(
             @RequestBody String payload,
             @RequestHeader("keyID") String keyID,
@@ -235,7 +242,13 @@ public class RouteController {
         model.addAttribute("routeid", id); // to generate update link
         model.addAttribute("username", username); // to generate update link
 
-        service.retrieveTrainServiceStatus();
+        if (sess.getAttribute("username") == null) {
+            return "unauthorised";
+        }
+
+        if (sess.getAttribute("username") != null && !username.equals(sess.getAttribute("username").toString())) {
+            return "unauthorised";
+        }
 
         Map<String, Object> allObjects = repoService.retrieveAll(username, id);
         if (!allObjects.isEmpty()) {
@@ -270,17 +283,20 @@ public class RouteController {
                 if (key.equals("traindeet")) {
                     List<TrainDetails> trainsInfo = (List<TrainDetails>) allObjects.get(key);
                     if (trainsInfo.size() != 0) {
+
                         String trainDataFetchOn = trainsInfo.get(0).getDataFetchedOn();
                         System.out.println("retreive side: " + trainsInfo.toString());
                         model.addAttribute("hasTrain", true);
 
                         model.addAttribute("trainDataFetchOn", trainDataFetchOn);
 
-                        TrainService result = service.retrieveTrainServiceStatus();
+                        // trainservioce
+                        TrainService result = service.retrieveTrainServiceStatus(id, username);
                         System.out.println("from controller side >>> " + result.toString());
                         trainsInfo = service.modTrainDetailsServiceStatus(result, trainsInfo);
                         model.addAttribute("trainsInfo", trainsInfo);
                         sess.setAttribute("trainsInfo", trainsInfo);
+                        ///
 
                         if (result.getStatusInString().equals("Disrupted")
                                 || result.getStatusInString().equals("Recovered")) {
@@ -337,8 +353,17 @@ public class RouteController {
 
     @GetMapping("/delete")
     public String deleteItem(
+            HttpSession sess,
             @RequestParam String id,
             @RequestParam String username) {
+
+        if (sess.getAttribute("username") == null) {
+            return "unauthorised";
+        }
+
+        if (sess.getAttribute("username") != null && !username.equals(sess.getAttribute("username").toString())) {
+            return "unauthorised";
+        }
 
         System.out.println("Deleting item with ID: " + id + " for user: " + username);
 

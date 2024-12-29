@@ -132,6 +132,7 @@ public class IndexController {
 
         // else login success
         sess.setAttribute("username", username);
+        System.out.println("this session username is " + sess.getAttribute("username").toString());
 
         return "redirect:/valid/" + username;
     }

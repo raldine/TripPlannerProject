@@ -36,7 +36,7 @@ import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
 import miniproject.TripPlannerProject.models.BusDetails;
-import miniproject.TripPlannerProject.models.BusStopToCode;
+
 import miniproject.TripPlannerProject.models.LocationRequest;
 import miniproject.TripPlannerProject.models.QuickView;
 import miniproject.TripPlannerProject.models.ResultObj;
@@ -64,9 +64,65 @@ public class DirectionsService {
         private String get_train_RealTimeCrowd = "https://datamall2.mytransport.sg/ltaodataservice/PCDRealTime";
         private String get_train_Service_Alert = "https://datamall2.mytransport.sg/ltaodataservice/TrainServiceAlerts";
 
+        // to insert later
+        @Value("${own.server.demo.api}")
+        private String call_fake_train_alert;
+
         // to replace with insertion later
-        private String ltaAPI1 = "fc9gZM/bTiSihnmKGWlWVw==";
-        private String ltaAPI2 = "V7uALdNjQkGOzz9aOYA7Yg==";
+        @Value("${lta.api.one}")
+        private String ltaAPI1;
+
+        @Value("${lta.api.two}")
+        private String ltaAPI2;
+
+
+        public static JsonArray listOfCodes;
+
+        public static JsonArray getListOfCodes() {
+                return listOfCodes;
+        }
+
+        public static void setListOfCodes(JsonArray listOfCodes) {
+                DirectionsService.listOfCodes = listOfCodes;
+        }
+
+        public String retrieveBusCode(String busStopName, String depLat, String depLng) {
+
+                String result = "Not Found";
+        
+                JsonArray toRead = listOfCodes;
+        
+                for (int i = 0; i < toRead.size(); i++) {
+                    JsonObject read = toRead.getJsonObject(i);
+                    String name = read.getString("Name").toLowerCase().trim().replaceAll("[^a-zA-Z0-9]", "");
+                    String matchname = busStopName.toLowerCase().trim().replaceAll("[^a-zA-Z0-9]", "");
+                    String busStopLat = String.valueOf(read.getJsonNumber("Latitude").doubleValue());
+                    String busStopLng = String.valueOf(read.getJsonNumber("Longitude").doubleValue());
+        
+                    if ((depLat.startsWith(busStopLat) || depLat.contains(busStopLat))
+                            && (depLng.startsWith(busStopLng) || depLng.contains(busStopLng))) {
+        
+                        System.out.println("id from latlng match:");
+                        result = read.getString("ID");
+        
+                    } else if (matchname.equals(name)) {
+                        System.out.println("id from name exact:");
+                        result = read.getString("ID");
+        
+                    } 
+                    // else if (result.equals("Not Found") &&
+                    //         matchname.contains(name) ||
+                    //         name.startsWith(matchname.toLowerCase())) {
+                    //     System.out.println("id from name slight match:");
+                    //     result = read.getString("ID");
+        
+                    // }
+        
+                }
+                return result;
+            }
+        
+        
 
         // get list of busstop codes @@@@Change this to load Bus codes file into a fixed
         // JsonArray tht is read
@@ -392,7 +448,7 @@ public class DirectionsService {
                 List<String> busNumStops = new LinkedList<>();
                 int countOfBuses = 0;
                 List<BusDetails> busesInfo = new LinkedList<>();
-                BusStopToCode match = new BusStopToCode();
+        
 
                 // train processing
                 TrainCodeToStation trainMatch = new TrainCodeToStation();
@@ -402,7 +458,7 @@ public class DirectionsService {
 
                         System.out.println(td.toString());
                         if (td.getVehicleType().toLowerCase().equals("bus")) {
-                                String busCodes = match.retrieveBusCode(td.getDepartureStopName(), td.getDepartLat(),
+                                String busCodes = retrieveBusCode(td.getDepartureStopName(), td.getDepartLat(),
                                                 td.getDepartLng()); // retrieve buscodes
                                 System.out.println(busCodes);
                                 busNumbers.add(td.getTransportName());
@@ -542,12 +598,10 @@ public class DirectionsService {
                 newToInsert.setKeyid(req.getKeyid());
                 newToInsert.setPrefTravelOp(req.getPref());
                 System.out.println("from service !!@@@@@@@@@@@@@ " + newToInsert.toString());
-                
+
                 JsonObject quickViewInJson = newToInsert.quickViewToJsonObject();
                 userService.putQuickViewIntoRepo(username, quickViewInJson);
                 //////// end of quickView
- 
-
 
                 // to put in repo" LocationRequest, Result, Bus or/And Train details,
                 // createdTime
@@ -710,95 +764,112 @@ public class DirectionsService {
         }
 
         // TRAINS Service Check
-        public TrainService retrieveTrainServiceStatus() {
+        public TrainService retrieveTrainServiceStatus(String keyid, String user) {
 
                 TrainService result = new TrainService();
 
-                JsonObject rootObject = Json.createObjectBuilder()
-                                .add("odata.metadata",
-                                                "http://datamall2.mytransport.sg/ltaodataservice/$metadata#TrainServicesAlerts")
-                                .add("value", Json.createObjectBuilder()
-                                                .add("Status", 2)
-                                                .add("AffectedSegments", Json.createArrayBuilder()
-                                                                .add(Json.createObjectBuilder()
-                                                                                .add("Line", "NEL")
-                                                                                .add("Direction", "HarbourFront")
-                                                                                .add("Stations", "NE9,NE8,NE7,NE6")
-                                                                                .add("FreePublicBus", "NE9,NE8,NE7,NE6")
-                                                                                .add("FreeMRTShuttle",
-                                                                                                "NE9,NE8,NE7,NE6")
-                                                                                .add("MRTShuttleDirection",
-                                                                                                "HarbourFront"))
-                                                                .add(Json.createObjectBuilder()
-                                                                                .add("Line", "NSL")
-                                                                                .add("Direction", "Both")
-                                                                                .add("Stations", "NS9,NS8,NS7,NS6,NS13,NS10,NS11,NS12")
-                                                                                .add("FreePublicBus",
-                                                                                                "NS9,NS8,NS7,NS6,NS13,NS10,NS11,NS12")
-                                                                                .add("FreeMRTShuttle",
-                                                                                                "NS9,NS8,NS7,NS6,NS13")
-                                                                                .add("MRTShuttleDirection", "Both")))
-                                                .add("Message", Json.createArrayBuilder()
-                                                                .add(Json.createObjectBuilder()
-                                                                                .add("Content", "0901hrs : NSL - Additional travelling time of 20 minutes between Yishun and Kranji stations in both directions due to a signal fault.")
-                                                                                .add("CreatedDate",
-                                                                                                "2018-03-16 09:01:53"))
-                                                                .add(Json.createObjectBuilder()
-                                                                                .add("Content", "0813hrs : NEL - Additional travelling time of 20 minutes between Boon Keng and Dhoby Ghuat stations towards HarbourFront station due to a signal fault.")
-                                                                                .add("CreatedDate",
-                                                                                                "2018-03-16 09:01:53"))))
-                                .build();
-                /// ///////////////////////////////
+                // this condition for demo only
+                if (keyid.equals("b8e68d2b") && user.equals("freddy")) {
+                        System.out.println("fake call to fake api activated");
+                        // DEMO ONLY FOR FAKE TRAIN FAILURE RESPONSE - call own server acting as train
+                        // api with disruption repsonse
+                        String getFAKEURLFinal = UriComponentsBuilder
+                                        .fromUriString(call_fake_train_alert)
+                                        .toUriString();
 
-                // String getURLFinal = UriComponentsBuilder
-                // .fromUriString(get_train_Service_Alert)
-                // .toUriString();
+                        RestTemplate template = new RestTemplate();
+                        ResponseEntity<String> resp;
 
-                // List<String> apiKeys = new LinkedList<>();
-                // apiKeys.add(ltaAPI2);
-                // apiKeys.add(ltaAPI1);
+                        RequestEntity<Void> req = RequestEntity
+                                        .get(getFAKEURLFinal)
+                                        .accept(MediaType.APPLICATION_JSON)
+                                        .build();
 
-                // RestTemplate template = new RestTemplate();
-                // ResponseEntity<String> resp;
+                        try {
+                                resp = template.exchange(req, String.class);
 
-                // for (String apiKey : apiKeys) {
-                // RequestEntity<Void> req = RequestEntity
-                // .get(getURLFinal)
-                // .header("AccountKey", apiKey)
-                // .accept(MediaType.APPLICATION_JSON)
-                // .build();
+                                String payload = resp.getBody();
 
-                // try {
+                                if (resp.getStatusCode().is2xxSuccessful() && payload != null) {
+                                        System.out.println("gotten reply from FAKE server");
+                                        JsonReader reader = Json.createReader(new StringReader(payload));
+                                        JsonObject fromServiceAlert = reader.readObject();
+                                        JsonObject valueObj = fromServiceAlert.getJsonObject("value");
 
-                // resp = template.exchange(req, String.class);
+                                        int status = valueObj.getInt("Status");
+                                        JsonArray affectedSegmentsArray = valueObj
+                                                        .getJsonArray("AffectedSegments");
+                                        JsonArray messagesArray = valueObj.getJsonArray("Message");
+                                        System.out.println("check message array: " + messagesArray.toString());
+                                        result = processTrainServiceAPIresult(status, affectedSegmentsArray,
+                                                        messagesArray);
 
-                // String payload = resp.getBody();
+                                        System.out.println("processed TrainService " + result.toString());
+                                        return result; // RESPONSE FAKE TRAIN BREAKDOWN FROM FAKE SERVER
+                                }
 
-                // if (resp.getStatusCode().is2xxSuccessful() && payload != null) {
-                // JsonReader reader = Json.createReader(new StringReader(payload));
-                // JsonObject fromServiceAlert = reader.readObject();
-                JsonObject valueObj = rootObject.getJsonObject("value");
+                        } catch (Exception ex) {
 
-                int status = valueObj.getInt("Status");
-                JsonArray affectedSegmentsArray = valueObj.getJsonArray("AffectedSegments");
-                JsonArray messagesArray = valueObj.getJsonArray("Message");
-                System.out.println("check message array: " + messagesArray.toString());
-                result = processTrainServiceAPIresult(status, affectedSegmentsArray,
-                                messagesArray);
+                                ex.printStackTrace();
+                                System.out.println(ex.getMessage());
 
-                System.out.println("processed TrainService " + result.toString());
+                        }
+
+                } else {
+                        System.out.println("calling LTA service alert");
+                        String getURLFinal = UriComponentsBuilder
+                                        .fromUriString(get_train_Service_Alert)
+                                        .toUriString();
+
+                        List<String> apiKeys = new LinkedList<>();
+                        apiKeys.add(ltaAPI2);
+                        apiKeys.add(ltaAPI1);
+
+                        RestTemplate template = new RestTemplate();
+                        ResponseEntity<String> resp;
+
+                        for (String apiKey : apiKeys) {
+                                RequestEntity<Void> req = RequestEntity
+                                                .get(getURLFinal)
+                                                .header("AccountKey", apiKey)
+                                                .accept(MediaType.APPLICATION_JSON)
+                                                .build();
+
+                                try {
+
+                                        resp = template.exchange(req, String.class);
+
+                                        String payload = resp.getBody();
+
+                                        if (resp.getStatusCode().is2xxSuccessful() && payload != null) {
+                                                System.out.println("gotten reply from REAL train server");
+                                                JsonReader reader = Json.createReader(new StringReader(payload));
+                                                JsonObject fromServiceAlert = reader.readObject();
+                                                JsonObject valueObj = fromServiceAlert.getJsonObject("value");
+
+                                                int status = valueObj.getInt("Status");
+                                                JsonArray affectedSegmentsArray = valueObj
+                                                                .getJsonArray("AffectedSegments");
+                                                JsonArray messagesArray = valueObj.getJsonArray("Message");
+                                                System.out.println("check message array: " + messagesArray.toString());
+                                                result = processTrainServiceAPIresult(status, affectedSegmentsArray,
+                                                                messagesArray);
+
+                                                System.out.println("processed TrainService " + result.toString());
+                                                return result; // CORRECT REPSONSE FROM API
+
+                                        }
+
+                                } catch (Exception ex) {
+
+                                        System.out.println("Error with API key " + apiKey + ": " + ex.getMessage());
+                                        ex.printStackTrace();
+                                        System.out.println(ex.getMessage());
+                                }
+                        } // end of keys loop with correct calling of real api
+                } // end of else condition - switch between fake api and real
+
                 return result;
-
-                // }
-
-                // } catch (Exception ex) {
-
-                // System.out.println("Error with API key " + apiKey + ": " + ex.getMessage());
-                // ex.printStackTrace();
-                // }
-                // }
-
-                // return result;
         }
 
         public TrainService processTrainServiceAPIresult(int status, JsonArray afSegArray, JsonArray messagesArray) {
@@ -879,6 +950,7 @@ public class DirectionsService {
         public List<TrainDetails> modTrainDetailsServiceStatus(TrainService resultFromApiProcessing,
                         List<TrainDetails> listOfTrains) {
 
+                                //NE6@Harbourfront ==> TrainDetail
                 Map<String, TrainDetails> tempToMatch = new HashMap<>();
 
                 for (TrainDetails oneTrain : listOfTrains) {
@@ -889,43 +961,69 @@ public class DirectionsService {
 
                 }
 
+                System.out.println("@@@@@@@@ CHECK MATCHING OF AFFECTED LINES THIS IS " + tempToMatch.toString());
+
                 if (resultFromApiProcessing.getStatusInString().equals("Disrupted")) {
 
                         // retrieve affectedanddirection
                         Map<String, List<String>> manyLines = resultFromApiProcessing.getAffectedLinesAndDirections();
+                        System.out.println("MANY LINES WHAT IS IT" + manyLines.toString());
 
-                        // get key from map
+                        // get key from map (actual api response)
                         Set<String> mapKeys = manyLines.keySet();
 
-                        // get keys for tempToMatch
-                        Set<String> keysForTD = tempToMatch.keySet();
+                        List<String> allAffectedFromAPI  = new LinkedList<>();
+                        //oneList
+                        for(String key : mapKeys){
 
-                        // iterate throug disrupted lines
-                        for (String mapKey : mapKeys) {
+                                List<String> toExtract = manyLines.get(key);
 
-                                // one line
-                                List<String> retrievedListforOneLine = manyLines.get(mapKey);
-                                System.out.println(
-                                                "from mod>>>>>>>>>>>>>>>>>>>>>>" + retrievedListforOneLine.toString());
-                                // iterate through list<string>
-                                for (int i = 0; i < retrievedListforOneLine.size(); i++) {
-                                        // for each StationCode@Destination (Disrupted)
-                                        String oneDisrupted = retrievedListforOneLine.get(i); // NE3@HarbourFront or
-                                                                                              // NE3@Both
-                                        String codeOnly = "dummy";
-                                        if (oneDisrupted.endsWith("Both")) {
-                                                codeOnly = oneDisrupted.substring(0, 2);
+                                for(String inside: toExtract){
+                                        String temp = inside.toLowerCase();
+
+                                        if(temp.endsWith("both")){
+
+                                                temp = temp.replaceAll("@both", "");
                                         }
 
-                                        for (String TDidentifier : keysForTD) {
-                                                if (TDidentifier.equals(oneDisrupted)
-                                                                || TDidentifier.startsWith(codeOnly)) {
-                                                        TrainDetails toChange = tempToMatch.get(TDidentifier);
-                                                        toChange.setServStatus("Disrupted");
-                                                }
+                                        allAffectedFromAPI.add(temp);
+                                }
+
+
+                        }
+
+                        System.out.println("EDITED LIST IS IS ISI SIISISIS " + allAffectedFromAPI.toString());
+
+                        // get keys for tempToMatch (the trainsinfo we trying to eval)
+                        Set<String> keysForTD = tempToMatch.keySet();
+                        System.out.println("Get keys of train details" + keysForTD.toString());
+
+                        //GET ONE traindetail --> 
+                        for(String tdIdentifier : keysForTD){
+
+                                TrainDetails toEval =  tempToMatch.get(tdIdentifier);
+
+                                for(int i = 0; i < allAffectedFromAPI.size(); i++){
+                                        String toCompareFromAPI = allAffectedFromAPI.get(i);
+                                        System.out.println("Now comparing the route " + tdIdentifier + " with " + toCompareFromAPI);
+
+                                        if(tdIdentifier.toLowerCase().equals(toCompareFromAPI)){
+                                                System.out.println("exact match");
+                                                toEval.setServStatus("Disrupted");
+                                                System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@ CHANGED: " + toEval.toString());
+                                        }
+                                        
+                                        if(toEval.getTrainStationCode().toLowerCase().equals(toCompareFromAPI)){
+                                                System.out.println("match in @both");
+                                                toEval.setServStatus("Disrupted");
+                                                System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@ CHANGED: " + toEval.toString());
+
                                         }
 
                                 }
+
+
+
                         }
 
                 }
